@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MyFlix - Streaming Clone</title>
+  <style>
+    body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;overflow-x:hidden;}
+    h2{margin:10px 0 15px 20px;font-size:1.5rem;}
+
+    /* NAVBAR */
+    nav{position:fixed;top:0;left:0;width:100%;padding:10px 30px;
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(0,0,0,0.7);z-index:100;backdrop-filter:blur(6px);}
+    .logo{font-size:1.6rem;font-weight:bold;color:#e50914;}
+    .nav-links{display:flex;gap:20px;}
+    .nav-links a{color:#fff;text-decoration:none;font-size:0.95rem;}
+    .nav-links a:hover{color:#e50914;}
+    .nav-right{display:flex;align-items:center;gap:15px;}
+    .search input{padding:5px 10px;border-radius:4px;border:none;}
+    .avatar{width:32px;height:32px;border-radius:50%;background:#666;}
+
+    /* HERO */
+    header{position:relative;width:100%;height:70vh;overflow:hidden;margin-top:60px;}
+    header video{width:100%;height:100%;object-fit:cover;filter:brightness(65%);}
+    header .overlay{position:absolute;bottom:0;left:0;right:0;padding:40px;
+      background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);}
+    header h1{font-size:3rem;margin:0 0 15px;}
+    header p{max-width:600px;margin:0 0 20px;font-size:1.1rem;}
+    .btn{padding:10px 20px;margin-right:10px;border:none;border-radius:5px;
+      font-weight:bold;cursor:pointer;transition:0.3s;}
+    .btn.play{background:#e50914;color:#fff;}
+    .btn.info{background:rgba(255,255,255,0.3);color:#fff;}
+    .btn:hover{opacity:0.85;}
+
+    /* ROW */
+    .row{padding:20px 0;}
+    .slider{position:relative;overflow:hidden;}
+    .slider-track{display:flex;transition:transform 0.3s ease;cursor:grab;}
+    .slider-track:active{cursor:grabbing;}
+    .card{min-width:180px;margin:0 6px;position:relative;cursor:pointer;transition:transform 0.3s;}
+    .card img{width:100%;border-radius:6px;}
+    .card:hover{transform:scale(1.08);z-index:5;}
+    .card .info{margin-top:5px;text-align:center;font-size:0.9rem;}
+    .card .overlay{position:absolute;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,0.65);opacity:0;display:flex;flex-direction:column;
+      justify-content:center;align-items:center;transition:0.3s;border-radius:6px;}
+    .card:hover .overlay{opacity:1;}
+    .card .overlay button{margin:5px;padding:5px 10px;border:none;border-radius:4px;cursor:pointer;}
+    .nav-btn{position:absolute;top:40%;transform:translateY(-50%);
+      background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:2rem;
+      cursor:pointer;z-index:20;padding:5px 12px;border-radius:50%;}
+    .nav-btn.left{left:0;}
+    .nav-btn.right{right:0;}
+
+    /* MODAL */
+    .modal{position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;z-index:200;}
+    .modal.show{display:flex;animation:fadeIn 0.4s ease forwards;}
+    .modal.hide{animation:fadeOut 0.4s ease forwards;}
+    .modal-content{background:#111;padding:20px;border-radius:8px;max-width:600px;width:90%;
+      transform:scale(0.7);opacity:0;animation:scaleIn 0.4s forwards;}
+    .modal.hide .modal-content{animation:scaleOut 0.4s forwards;}
+    .modal-content img{width:100%;border-radius:8px;margin-bottom:15px;}
+    .modal-content h2{margin:0 0 10px;}
+    .modal-content p{font-size:0.95rem;color:#ccc;}
+    .close{position:absolute;top:20px;right:30px;font-size:2rem;color:#fff;cursor:pointer;}
+
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    @keyframes fadeOut{from{opacity:1;}to{opacity:0;}}
+    @keyframes scaleIn{from{transform:scale(0.7);opacity:0;}to{transform:scale(1);opacity:1;}}
+    @keyframes scaleOut{from{transform:scale(1);opacity:1;}to{transform:scale(0.7);opacity:0;}}
+
+    /* FOOTER */
+    footer{background:#111;color:#777;text-align:center;padding:20px 10px;font-size:0.85rem;margin-top:20px;}
+
+    @media(max-width:768px){
+      header h1{font-size:2rem;}
+      header p{font-size:0.9rem;}
+      .card{min-width:140px;}
+      .nav-links{display:none;}
+    }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav>
+    <div class="logo">MyFlix</div>
+    <div class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">Film</a>
+      <a href="#">Serial</a>
+      <a href="#">Daftar Saya</a>
+    </div>
+    <div class="nav-right">
+      <div class="search"><input type="text" placeholder="Search..."></div>
+      <div class="avatar"></div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header>
+    <video id="heroVideo" autoplay muted loop poster="">
+      <source id="heroSource" src="" type="video/mp4">
+    </video>
+    <div class="overlay">
+      <h1 id="heroTitle"></h1>
+      <p id="heroDesc"></p>
+      <button class="btn play">▶ Play</button>
+      <button class="btn info" id="heroInfo">ℹ Info</button>
+    </div>
+  </header>
+
+  <!-- ROWS -->
+  <section id="rows"></section>
+
+  <!-- FOOTER -->
+  <footer>
+    Copyright © 2025 MyFlix. All Rights Reserved.
+  </footer>
+
+  <!-- MODAL -->
+  <div class="modal" id="modal">
+    <div class="modal-content" id="modalContent"></div>
+  </div>
+
+  <script>
+    /* 60 contoh video */
+    const videos = [
+  {
+    title: "She does it again",
+    desc: "She does it again again and again",
+    url: "https://vdyceo678y.github.io/Vdghj3qe1.mp4",
+    poster: "https://videyceo-ops.github.io/Vdghj3qe1.mp4/1.jpg"
+  },
+  {
+    title: "Film 2",
+    desc: "Deskripsi singkat Film 2",
+    url: "https://vdyceo678y.github.io/9RRDFBCg1.mp4",
+    poster: "https://videyceo-ops.github.io/9RRDFBCg1.mp4/2.jpg"
+  }
+];
+
+
+    /* Hero rotator */
+    let current=0;
+    function loadHero(i){
+      const v=videos[i];
+      document.getElementById("heroSource").src=v.url;
+      document.getElementById("heroVideo").poster=v.poster;
+      document.getElementById("heroVideo").load();
+      document.getElementById("heroTitle").textContent=v.title;
+      document.getElementById("heroDesc").textContent=v.desc;
+      document.getElementById("heroInfo").onclick=()=>openModal(v);
+    }
+    loadHero(0);
+    setInterval(()=>{current=(current+1)%videos.length;loadHero(current);},8000);
+
+    /* Rows data */
+    const rowsData=[
+      {title:"🔥 Today's Top 10",movies:videos.slice(0,12)},
+      {title:"🆕 Latest Release",movies:videos.slice(12,24)},
+      {title:"⭐ Special Collection",movies:videos.slice(24,36)},
+      {title:"🎭 Popular Drama",movies:videos.slice(36,48)},
+      {title:"😂 Short duration",movies:videos.slice(48,60)},
+      {title:"🎬 Long duration",movies:videos.slice(0,12)}
+    ];
+    const rowsContainer=document.getElementById("rows");
+
+    rowsData.forEach((row,idx)=>{
+      const rowDiv=document.createElement("div");
+      rowDiv.className="row";
+      rowDiv.innerHTML=`<h2>${row.title}</h2>
+        <div class="slider">
+          <button class="nav-btn left" data-idx="${idx}">❮</button>
+          <div class="slider-track" id="track-${idx}"></div>
+          <button class="nav-btn right" data-idx="${idx}">❯</button>
+        </div>`;
+      rowsContainer.appendChild(rowDiv);
+
+      const track=rowDiv.querySelector(".slider-track");
+      row.movies.forEach(m=>{
+        const card=document.createElement("div");
+        card.className="card";
+        card.innerHTML=`
+          <img src="${m.poster}" alt="${m.title}">
+          <div class="overlay">
+            <button class="btn play">▶ Play</button>
+            <button class="btn info">ℹ Info</button>
+          </div>
+          <div class="info">${m.title}</div>`;
+        track.appendChild(card);
+
+        card.querySelector(".btn.info").onclick=()=>openModal(m);
+        card.querySelector(".info").onclick=()=>openModal(m);
+      });
+
+      /* Drag scroll */
+      let isDown=false,startX,scrollLeft;
+      track.addEventListener("mousedown",e=>{
+        isDown=true;track.classList.add("active");
+        startX=e.pageX-track.offsetLeft;
+        scrollLeft=track.scrollLeft;
+      });
+      track.addEventListener("mouseleave",()=>isDown=false);
+      track.addEventListener("mouseup",()=>isDown=false);
+      track.addEventListener("mousemove",e=>{
+        if(!isDown)return;
+        e.preventDefault();
+        const x=e.pageX-track.offsetLeft;
+        const walk=(x-startX)*2;
+        track.scrollLeft=scrollLeft-walk;
+      });
+      /* Touch support */
+      track.addEventListener("touchstart",e=>{
+        isDown=true;startX=e.touches[0].pageX-track.offsetLeft;scrollLeft=track.scrollLeft;
+      });
+      track.addEventListener("touchend",()=>isDown=false);
+      track.addEventListener("touchmove",e=>{
+        if(!isDown)return;
+        const x=e.touches[0].pageX-track.offsetLeft;
+        const walk=(x-startX)*2;
+        track.scrollLeft=scrollLeft-walk;
+      });
+    });
+
+    /* Modal with animation */
+    const modal=document.getElementById("modal");
+    function openModal(movie){
+      modal.classList.remove("hide");
+      modal.classList.add("show");
+      modal.style.display="flex";
+      const content=document.getElementById("modalContent");
+      content.innerHTML=`
+        <span class="close" id="closeModal">&times;</span>
+        <img src="${movie.poster}" alt="${movie.title}">
+        <h2>${movie.title}</h2>
+        <p>${movie.desc}</p>
+        <button class="btn play">▶ Watch Now</button>
+        <button class="btn info">+ Add to List </button>
+      `;
+      document.getElementById("closeModal").onclick=closeModal;
+    }
+    function closeModal(){
+      modal.classList.remove("show");
+      modal.classList.add("hide");
+      setTimeout(()=>{modal.style.display="none";},400);
+    }
+    window.onclick=(e)=>{if(e.target==modal)closeModal();};
+  </script>
+</body>
+</html>
