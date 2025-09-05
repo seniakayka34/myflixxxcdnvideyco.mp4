@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MyFlix - Streaming CDN Video.co</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyFlix - Streaming</title>
   <style>
     body {
       margin: 0;
@@ -11,18 +11,22 @@
       color: #fff;
       font-family: Arial, Helvetica, sans-serif;
     }
+    /* Navbar */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 15px 40px;
-      background: rgba(0,0,0,0.7);
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 1000;
+      transition: background 0.4s;
+    }
+    header.scrolled {
+      background: rgba(0,0,0,0.9);
     }
     header .logo {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: bold;
       color: #e50914;
     }
@@ -32,13 +36,14 @@
       color: #fff;
       font-size: 14px;
     }
-
+    /* Hero */
     .hero {
       position: relative;
-      height: 90vh;
+      height: 80vh;
+      margin-top: 60px;
       overflow: hidden;
     }
-    .hero video {
+    .hero img {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -46,7 +51,7 @@
     .hero .overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.1));
+      background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3));
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -56,26 +61,50 @@
       font-size: 48px;
       margin: 0;
     }
+    .hero .rating {
+      font-size: 16px;
+      margin-top: 8px;
+      color: gold;
+    }
     .hero p {
       max-width: 600px;
       margin: 20px 0;
       font-size: 18px;
     }
-    .btn {
-      background: #e50914;
+    /* Tombol */
+    .btn-play {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
       border: none;
-      padding: 12px 24px;
-      margin-right: 10px;
+      background: #e50914;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .btn-play:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px #e50914;
+    }
+    .btn-info {
+      background: rgba(109,109,110,0.7);
+      border: none;
+      padding: 12px 20px;
+      margin-left: 10px;
       border-radius: 4px;
       font-size: 16px;
       cursor: pointer;
+      color: #fff;
+      transition: background 0.3s;
     }
-    .btn.info {
-      background: rgba(109,109,110,0.7);
+    .btn-info:hover {
+      background: rgba(29,155,240,0.8);
     }
-
+    /* Row */
     .row {
       padding: 20px 40px;
+      position: relative;
     }
     .row h2 {
       margin: 0 0 10px 0;
@@ -95,7 +124,7 @@
       transition: transform 0.3s;
     }
     .card img {
-      width: 200px;
+      width: 180px;
       border-radius: 6px;
       display: block;
     }
@@ -103,24 +132,30 @@
       transform: scale(1.1);
       z-index: 10;
     }
-    .card .info {
+    .card .rating {
       position: absolute;
-      bottom: 10px;
-      left: 10px;
-      right: 10px;
-      opacity: 0;
-      transition: opacity 0.3s;
-      background: rgba(0,0,0,0.6);
-      padding: 5px;
+      top: 8px; left: 8px;
+      background: rgba(0,0,0,0.7);
+      padding: 2px 6px;
       border-radius: 4px;
-      text-align: center;
-      font-size: 14px;
+      font-size: 12px;
+      color: gold;
     }
-    .card:hover .info {
-      opacity: 1;
+    /* Nav arrows */
+    .arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 32px;
+      cursor: pointer;
+      background: rgba(0,0,0,0.5);
+      border-radius: 50%;
+      padding: 6px 12px;
+      user-select: none;
     }
-
-    /* Modal Info */
+    .arrow.left { left: 10px; }
+    .arrow.right { right: 10px; }
+    /* Modal */
     .modal, .player-modal {
       position: fixed;
       inset: 0;
@@ -135,18 +170,18 @@
       background: #111;
       padding: 20px;
       border-radius: 8px;
-      max-width: 800px;
+      max-width: 600px;
       width: 90%;
       position: relative;
-      animation: slideUp 0.3s ease;
-    }
-    .modal-content img {
-      width: 100%;
-      border-radius: 6px;
-      margin-bottom: 15px;
+      animation: zoomIn 0.3s ease;
+      text-align: center;
     }
     .modal-content h3 {
-      margin-top: 0;
+      margin: 10px 0;
+    }
+    .modal-content .rating {
+      color: gold;
+      margin-bottom: 15px;
     }
     .close {
       position: absolute;
@@ -154,14 +189,9 @@
       font-size: 24px;
       cursor: pointer;
     }
-    @keyframes fadeIn {
-      from {opacity:0} to {opacity:1}
-    }
-    @keyframes slideUp {
-      from {transform: translateY(40px); opacity:0}
-      to {transform: translateY(0); opacity:1}
-    }
-
+    @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+    @keyframes zoomIn { from {transform: scale(0.8); opacity:0} to {transform: scale(1); opacity:1} }
+    /* Footer */
     footer {
       text-align: center;
       padding: 20px;
@@ -174,7 +204,7 @@
 </head>
 <body>
   <header>
-    <div class="logo">VIDEY+</div>
+    <div class="logo">MyFlix</div>
     <nav>
       <a href="#">Home</a>
       <a href="#">Movies</a>
@@ -182,28 +212,37 @@
     </nav>
   </header>
 
-  <!-- Hero Section -->
+  <!-- Hero -->
   <section class="hero">
-    <video id="heroVideo" autoplay muted loop></video>
+    <img id="heroBanner" src="" alt="Banner">
     <div class="overlay">
-      <h1 id="heroTitle">Loading...</h1>
-      <p id="heroDesc">Please wait</p>
-      <button class="btn play">▶ Play</button>
-      <button class="btn info" id="moreInfoBtn">ℹ Info</button>
+      <h1 id="heroTitle"></h1>
+      <div class="rating" id="heroRating"></div>
+      <p id="heroDesc"></p>
+      <div>
+        <button class="btn-play" id="heroPlay">▶</button>
+        <button class="btn-info" id="heroInfo">More Info</button>
+      </div>
     </div>
   </section>
 
   <!-- Rows -->
   <section class="row">
-    <h2>Top 10 Hari Ini</h2>
+    <h2>Trending Now</h2>
+    <span class="arrow left" onclick="scrollRow('row1',-1)">&#10094;</span>
+    <span class="arrow right" onclick="scrollRow('row1',1)">&#10095;</span>
     <div class="carousel" id="row1"></div>
   </section>
   <section class="row">
-    <h2>Rilis Terbaru</h2>
+    <h2>New Releases</h2>
+    <span class="arrow left" onclick="scrollRow('row2',-1)">&#10094;</span>
+    <span class="arrow right" onclick="scrollRow('row2',1)">&#10095;</span>
     <div class="carousel" id="row2"></div>
   </section>
   <section class="row">
-    <h2>Film Populer</h2>
+    <h2>Popular on MyFlix</h2>
+    <span class="arrow left" onclick="scrollRow('row3',-1)">&#10094;</span>
+    <span class="arrow right" onclick="scrollRow('row3',1)">&#10095;</span>
     <div class="carousel" id="row3"></div>
   </section>
 
@@ -211,9 +250,9 @@
   <div class="modal" id="infoModal">
     <div class="modal-content">
       <span class="close" id="closeInfo">&times;</span>
-      <img id="infoPoster" src="" alt="">
       <h3 id="infoTitle"></h3>
-      <p id="infoDesc"></p>
+      <div class="rating" id="infoRating"></div>
+      <button class="btn-play" id="infoPlay">▶</button>
     </div>
   </div>
 
@@ -230,101 +269,93 @@
   </footer>
 
   <script>
+    // === Data Film (60 contoh) ===
     const videos = Array.from({length:60}).map((_,i)=>({
       title:`Film ${i+1}`,
-      desc:`Deskripsi singkat Film ${i+1}`,
-      url:`https://vdyceo678y.github.io/Vdghj3qe1.mp4/`, // ganti dengan URL video kamu
-      poster:`https://videyceo-ops.github.io/Vdghj3qe1.mp4/1.jpg?random=${i+1}`
+      desc:`She does it again ${i+1}.`,
+      rating:(Math.random()*4+6).toFixed(1),
+      url:`https://vdyceo678y.github.io/Vdghj3qe1.mp4/`,
+      poster:`https://videyceo-ops.github.io/Vdghj3qe1.mp4/1.jpg?random=${i+1}`,
+      banner:`https://picsum.photos/1200/600?random=${i+1}`
     }));
 
-    let currentHero = 0;
-    const heroVideo = document.getElementById("heroVideo");
-    const heroTitle = document.getElementById("heroTitle");
-    const heroDesc = document.getElementById("heroDesc");
+    // Navbar scroll effect
+    window.addEventListener("scroll",()=>{
+      document.querySelector("header").classList.toggle("scrolled",window.scrollY>50);
+    });
 
-    function updateHero(index){
-      const v = videos[index];
-      heroVideo.src = v.url;
-      heroTitle.textContent = v.title;
-      heroDesc.textContent = v.desc;
-      currentHero = index;
+    // Hero auto rotate
+    let currentHero=0;
+    const heroBanner=document.getElementById("heroBanner");
+    const heroTitle=document.getElementById("heroTitle");
+    const heroDesc=document.getElementById("heroDesc");
+    const heroRating=document.getElementById("heroRating");
+    function updateHero(idx){
+      const v=videos[idx];
+      heroBanner.src=v.banner;
+      heroTitle.textContent=v.title;
+      heroDesc.textContent=v.desc;
+      heroRating.textContent="⭐ "+v.rating;
+      currentHero=idx;
     }
     updateHero(0);
-    setInterval(()=> {
-      currentHero = (currentHero+1)%videos.length;
-      updateHero(currentHero);
-    }, 8000);
+    setInterval(()=>{currentHero=(currentHero+1)%videos.length;updateHero(currentHero);},8000);
 
-    // isi row film
-    function renderRow(rowId, start){
-      const row = document.getElementById(rowId);
-      for(let i=start;i<start+12;i++){
-        const v = videos[i];
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
+    // Render row
+    function renderRow(rowId,start){
+      const row=document.getElementById(rowId);
+      for(let i=start;i<start+20;i++){
+        const v=videos[i];
+        const card=document.createElement("div");
+        card.className="card";
+        card.innerHTML=`
           <img src="${v.poster}" alt="${v.title}">
-          <div class="info">${v.title}<br>
-            <button class="btn play" data-index="${i}" style="padding:4px 8px;font-size:12px;">▶</button>
-            <button class="btn info small" data-index="${i}" style="padding:4px 8px;font-size:12px;">ℹ</button>
-          </div>`;
+          <div class="rating">⭐ ${v.rating}</div>`;
+        card.addEventListener("click",()=>openInfo(i));
         row.appendChild(card);
       }
     }
     renderRow("row1",0);
-    renderRow("row2",12);
-    renderRow("row3",24);
+    renderRow("row2",20);
+    renderRow("row3",40);
+
+    // Scroll row arrows
+    function scrollRow(id,dir){
+      const row=document.getElementById(id);
+      row.scrollBy({left:dir*600,behavior:"smooth"});
+    }
 
     // Modal Info
-    const infoModal = document.getElementById("infoModal");
-    const infoPoster = document.getElementById("infoPoster");
-    const infoTitle = document.getElementById("infoTitle");
-    const infoDesc = document.getElementById("infoDesc");
-    document.body.addEventListener("click",(e)=>{
-      if(e.target.classList.contains("info")){
-        const idx = e.target.dataset.index || currentHero;
-        const v = videos[idx];
-        infoPoster.src = v.poster;
-        infoTitle.textContent = v.title;
-        infoDesc.textContent = v.desc;
-        infoModal.style.display="flex";
-      }
-    });
+    const infoModal=document.getElementById("infoModal");
+    const infoTitle=document.getElementById("infoTitle");
+    const infoRating=document.getElementById("infoRating");
+    const infoPlay=document.getElementById("infoPlay");
+    let currentInfo=0;
+    function openInfo(idx){
+      const v=videos[idx];
+      currentInfo=idx;
+      infoTitle.textContent=v.title;
+      infoRating.textContent="⭐ "+v.rating;
+      infoModal.style.display="flex";
+    }
+    document.getElementById("heroInfo").onclick=()=>openInfo(currentHero);
     document.getElementById("closeInfo").onclick=()=>infoModal.style.display="none";
 
     // Modal Player
-    const playerModal = document.getElementById("playerModal");
-    const playerVideo = document.getElementById("playerVideo");
-    document.body.addEventListener("click",(e)=>{
-      if(e.target.classList.contains("play")){
-        const idx = e.target.dataset.index || currentHero;
-        const v = videos[idx];
-        playerVideo.src = v.url;
-        playerModal.style.display="flex";
-        playerVideo.play();
-      }
-    });
+    const playerModal=document.getElementById("playerModal");
+    const playerVideo=document.getElementById("playerVideo");
+    function playVideo(idx){
+      const v=videos[idx];
+      playerVideo.src=v.url;
+      playerModal.style.display="flex";
+      playerVideo.play();
+    }
+    document.getElementById("heroPlay").onclick=()=>playVideo(currentHero);
+    infoPlay.onclick=()=>{playVideo(currentInfo); infoModal.style.display="none";};
     document.getElementById("closePlayer").onclick=()=>{
       playerVideo.pause();
       playerModal.style.display="none";
     };
-
-    // drag-to-scroll untuk carousel
-    document.querySelectorAll(".carousel").forEach(carousel=>{
-      let isDown=false, startX, scrollLeft;
-      carousel.addEventListener("mousedown",(e)=>{
-        isDown=true; startX=e.pageX-carousel.offsetLeft; scrollLeft=carousel.scrollLeft;
-      });
-      carousel.addEventListener("mouseleave",()=>isDown=false);
-      carousel.addEventListener("mouseup",()=>isDown=false);
-      carousel.addEventListener("mousemove",(e)=>{
-        if(!isDown) return;
-        e.preventDefault();
-        const x=e.pageX-carousel.offsetLeft;
-        const walk=(x-startX)*2;
-        carousel.scrollLeft=scrollLeft-walk;
-      });
-    });
   </script>
 </body>
 </html>
