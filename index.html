@@ -1,267 +1,390 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MyFlix - Streaming</title>
-  <style>
-    body { margin:0; background:#000; color:#fff; font-family:Arial,sans-serif; overflow-x:hidden; }
-    header { display:flex; justify-content:space-between; align-items:center; padding:15px 40px;
-      position:fixed; top:0; left:0; right:0; z-index:1000; transition:background .4s; }
-    header.scrolled { background:rgba(0,0,0,.9); }
-    .logo { font-size:26px; font-weight:bold; color:#e50914; }
-    nav a { margin-left:20px; text-decoration:none; color:#fff; font-size:14px; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MyFlix — Tanpa Poster (Judul + Video)</title>
+<style>
+  :root{
+    --brand:#e50914;
+    --ink:#ffffff;
+    --muted:#b5b5b5;
+    --panel:#111;
+    --panel-2:#0b0b0b;
+    --glow:#00d4ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#000;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  a,button{font:inherit}
+  /* Header */
+  header{
+    position:fixed;inset:0 0 auto 0;height:64px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 24px;z-index:1000;transition:background .35s ease,box-shadow .35s ease;
+    background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(0,0,0,.0));
+  }
+  header.scrolled{background:rgba(0,0,0,.8);backdrop-filter:saturate(1.2) blur(4px);box-shadow:0 6px 30px rgba(0,0,0,.35)}
+  .logo{color:var(--brand);font-weight:800;letter-spacing:.5px}
+  .logo span{color:#fff;opacity:.9}
 
-    /* Hero */
-    .hero { position:relative; height:80vh; margin-top:60px; overflow:hidden; }
-    .hero-slide { position:absolute; inset:0; opacity:0; transition:opacity 1s ease; }
-    .hero-slide.active { opacity:1; z-index:1; }
-    .hero-slide video { width:100%; height:100%; object-fit:cover; }
-    .overlay {
-      position:absolute; inset:0;
-      background:linear-gradient(to top,rgba(0,0,0,0.85),rgba(0,0,0,0.3));
-      display:flex; flex-direction:column; justify-content:center;
-      padding:0 60px; animation:fadeUp 1s ease forwards;
-    }
-    .overlay h1 { font-size:48px; margin:0; }
-    .overlay .rating { color:gold; margin:8px 0; }
-    .overlay p { max-width:600px; font-size:18px; margin:20px 0; }
+  /* Hero */
+  .hero{position:relative;height:78vh;min-height:520px;overflow:hidden}
+  .hero-slide{
+    position:absolute;inset:0;opacity:0;transition:opacity 900ms ease;pointer-events:none
+  }
+  .hero-slide.active{opacity:1;pointer-events:auto}
+  .hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.05) contrast(1.05) brightness(.9)}
+  .hero::after{
+    content:"";position:absolute;inset:auto 0 0 0;height:50%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75) 40%,rgba(0,0,0,.95));
+    pointer-events:none;z-index:1;
+  }
+  .hero-overlay{
+    position:absolute;z-index:2;left:clamp(16px,6vw,64px);bottom:clamp(100px,22vh,240px);max-width:min(640px,80vw);
+    animation:fadeUp 800ms ease both 120ms;
+  }
+  .hero h1{margin:0 0 8px;font-size:clamp(28px,6vw,56px);line-height:1.05;text-shadow:0 6px 30px rgba(0,0,0,.6)}
+  .hero p{margin:0 0 18px;color:var(--muted);max-width:64ch}
+  .btn{display:inline-flex;gap:10px;align-items:center;justify-content:center;cursor:pointer;border:0}
+  .btn-play{
+    width:64px;height:64px;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;box-shadow:0 0 0 0 rgba(229,9,20,.6);
+    transition:transform .2s ease, box-shadow .35s ease, filter .2s ease;
+  }
+  .btn-play:hover{transform:scale(1.06) rotate(2deg);box-shadow:0 0 24px 6px rgba(229,9,20,.45)}
+  .btn-info{
+    padding:12px 18px;border-radius:10px;background:#313131;color:#fff;transition:transform .2s ease, box-shadow .35s ease;
+  }
+  .btn-info:hover{transform:translateY(-2px);box-shadow:0 0 22px rgba(0,212,255,.35)}
+  .badges{display:flex;gap:10px;align-items:center;margin-top:10px;opacity:.9}
+  .pill{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.1);backdrop-filter:blur(2px)}
 
-    /* Buttons */
-    .btn-play { width:60px; height:60px; border-radius:50%; border:none;
-      background:#e50914; color:#fff; font-size:24px; cursor:pointer;
-      transition:transform .3s, box-shadow .3s; animation:pulse 2s infinite; }
-    .btn-play:hover { transform:scale(1.2) rotate(10deg); box-shadow:0 0 25px #e50914; }
-    .btn-info { background:rgba(109,109,110,0.7); border:none; padding:12px 20px; margin-left:10px;
-      border-radius:4px; font-size:16px; cursor:pointer; color:#fff;
-      transition:transform .3s, background .3s, box-shadow .3s; }
-    .btn-info:hover { transform:translateY(-3px); background:rgba(29,155,240,0.9); box-shadow:0 0 15px rgba(29,155,240,.9); }
+  main{position:relative;z-index:3;margin-top:-12vh}
 
-    /* Rows */
-    .row { padding:20px 40px; position:relative; }
-    .row h2 { margin:0 0 10px 0; }
-    .carousel { display:flex; overflow-x:auto; scroll-behavior:smooth; cursor:grab; }
-    .carousel::-webkit-scrollbar { display:none; }
-    .card { flex:0 0 auto; margin-right:10px; position:relative; cursor:pointer;
-      transition:transform .3s, box-shadow .3s; }
-    .card img { width:180px; border-radius:6px; display:block; }
-    .card:hover { transform:scale(1.1) translateY(-5px); z-index:10; box-shadow:0 0 25px rgba(229,9,20,0.8); }
-    .card .rating { position:absolute; top:8px; left:8px; background:rgba(0,0,0,.7);
-      padding:2px 6px; border-radius:4px; font-size:12px; color:gold; }
+  /* Rows */
+  .row{position:relative;padding:18px clamp(16px,5vw,48px)}
+  .row-title{margin:0 0 12px;font-size:clamp(18px,2.8vw,24px);font-weight:700;letter-spacing:.3px}
+  .carousel{display:flex;gap:14px;overflow:auto hidden;scroll-behavior:smooth;scroll-snap-type:x mandatory;padding-bottom:8px}
+  .carousel::-webkit-scrollbar{height:10px}
+  .carousel::-webkit-scrollbar-thumb{background:#222;border-radius:10px}
+  .card{
+    flex:0 0 clamp(180px,20vw,240px); aspect-ratio:16/9; border-radius:14px; padding:14px; position:relative;
+    background:
+      radial-gradient(1200px 200px at -10% -10%, rgba(255,255,255,.06), transparent),
+      linear-gradient(135deg, #1a1a1a, #0d0d0d);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 8px 30px rgba(0,0,0,.35);
+    display:flex;align-items:flex-end;justify-content:flex-start;
+    cursor:pointer;scroll-snap-align:start;transition:transform .25s ease, box-shadow .35s ease, outline .25s ease;
+    outline:1px solid rgba(255,255,255,.04)
+  }
+  .card:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 14px 40px rgba(0,0,0,.6), 0 0 0 1px rgba(229,9,20,.3) inset}
+  .card::after{
+    content:"";position:absolute;inset:0;background:
+      linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,.75) 100%);
+    border-radius:14px;pointer-events:none
+  }
+  .c-title{position:relative;z-index:2;font-weight:800;letter-spacing:.3px}
+  .c-meta{position:relative;z-index:2;color:var(--muted);font-size:12px;margin-top:4px}
+  .rating-badge{
+    position:absolute;top:10px;right:10px;z-index:2; background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.08);
+    padding:6px 8px;border-radius:999px;font-size:12px;backdrop-filter:blur(2px)
+  }
 
-    /* Nav arrows */
-    .nav-btn { position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5);
-      border:none; color:#fff; font-size:28px; width:50px; height:80px; cursor:pointer;
-      display:flex; align-items:center; justify-content:center; opacity:0.5; transition:0.3s; z-index:5; }
-    .nav-btn:hover { opacity:1; background:rgba(0,0,0,0.8); }
-    .nav-left { left:0; border-radius:0 5px 5px 0; }
-    .nav-right { right:0; border-radius:5px 0 0 5px; }
+  /* Arrows */
+  .nav{position:absolute;inset:auto 8px auto auto;top:50%;transform:translateY(-50%);display:flex;gap:8px;z-index:5}
+  .nav-btn{
+    width:44px;height:80px;border-radius:10px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.08);
+    color:#fff;font-size:22px;display:grid;place-items:center;cursor:pointer;transition:background .2s ease, transform .2s ease
+  }
+  .nav-btn:hover{background:rgba(229,9,20,.8);transform:translateY(-2px)}
+  .nav-left{position:absolute;left:6px;top:50%;transform:translateY(-50%)}
+  .nav-right{position:absolute;right:6px;top:50%;transform:translateY(-50%)}
 
-    /* Modal */
-    .modal,.player-modal { position:fixed; inset:0; background:rgba(0,0,0,.85);
-      display:none; align-items:center; justify-content:center; z-index:2000; }
-    .modal.show,.player-modal.show { display:flex; animation:fadeInZoom .4s ease; }
-    .modal-content,.player-content { background:#111; padding:20px; border-radius:8px; width:90%; max-width:600px; text-align:center; position:relative; }
-    .close { position:absolute; top:15px; right:15px; width:35px; height:35px; border-radius:50%; background:rgba(255,255,255,0.15);
-      color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center;
-      cursor:pointer; transition:background .3s, transform .3s; }
-    .close:hover { background:#e50914; transform:rotate(90deg) scale(1.1); }
+  /* Modals */
+  .modal,.player-modal{
+    position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.8);z-index:2000
+  }
+  .modal.show,.player-modal.show{display:flex;animation:fadeIn .25s ease both}
+  .modal-content,.player-content{
+    width:min(92vw,520px);background:var(--panel);border-radius:16px;padding:20px 20px 18px;position:relative;
+    box-shadow:0 40px 120px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.06);
+    animation:zoomIn .3s ease both
+  }
+  .player-content{width:min(96vw,960px);background:var(--panel-2)}
+  .modal h2{margin:0 0 8px}
+  .modal p{margin:0 0 14px;color:var(--muted)}
+  .close{
+    position:absolute;top:10px;right:12px;width:42px;height:42px;border-radius:999px;background:rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.12);display:grid;place-items:center;font-size:22px;cursor:pointer;z-index:2100;
+    transition:background .2s ease, transform .15s ease, box-shadow .35s ease
+  }
+  .close:hover{background:var(--brand);box-shadow:0 0 18px rgba(229,9,20,.55);transform:rotate(-6deg) scale(1.06)}
 
-    footer { text-align:center; padding:20px; background:#111; margin-top:40px; color:#aaa; font-size:14px; }
+  video{max-width:100%;border-radius:12px;background:#000}
 
-    /* Animations */
-    @keyframes fadeUp { from{opacity:0; transform:translateY(30px);} to{opacity:1; transform:translateY(0);} }
-    @keyframes fadeInZoom { from{opacity:0; transform:scale(.8);} to{opacity:1; transform:scale(1);} }
-    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(229,9,20,0.7);} 70%{box-shadow:0 0 0 20px rgba(229,9,20,0);} 100%{box-shadow:0 0 0 0 rgba(229,9,20,0);} }
-  </style>
+  footer{margin:28px 0 40px;text-align:center;color:#8a8a8a;font-size:13px}
+
+  /* Animations */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes zoomIn{from{transform:scale(.86)}to{transform:scale(1)}}
+
+  /* Responsive tweaks */
+  @media (max-width:640px){
+    .btn-play{width:56px;height:56px}
+    .btn-info{padding:10px 14px}
+    .card{flex-basis:72vw}
+  }
+</style>
 </head>
 <body>
   <header>
-    <div class="logo">MyFlix</div>
-    <nav>
-      <a href="#">Home</a><a href="#">Movies</a><a href="#">Series</a>
-    </nav>
+    <div class="logo">My<span>Flix</span></div>
   </header>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-slide active" data-title="Hero Film 1" data-rating="⭐ 8.5" data-url="https://cdn.videy.co/YCp8BT4K1.mp4">
-      <video autoplay muted loop>
-        <source src="https://cdn.videy.co/YCp8BT4K1.mp4">
+  <!-- HERO (video background, auto-rotate) -->
+  <section class="hero" aria-label="Sorotan">
+    <div class="hero-slide active">
+      <video autoplay muted loop playsinline>
+        <source src="https://cdn.videy.co/MO1yI95M1.mp4"/>
       </video>
-      <div class="overlay">
-        <h1>Hero Film 1</h1>
-        <div class="rating">⭐ 8.5</div>
-        <p>She does it again.</p>
-        <div>
-          <button class="btn-play" data-url="https://cdn.videy.co/YCp8BT4K1.mp4">▶</button>
-          <button class="btn-info" data-title="Hero Film 1" data-rating="⭐ 8.5" data-url="https://cdn.videy.co/YCp8BT4K1.mp4">More Info</button>
+      <div class="hero-overlay">
+        <h1>Hero: Aksi Spektakuler</h1>
+        <p>Kejutan tanpa henti dalam petualangan berkecepatan tinggi.</p>
+        <div class="badges">
+          <span class="pill">HDR</span><span class="pill">Dolby</span><span class="pill">Baru</span>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="btn btn-play" data-url="https://cdn.videy.co/MO1yI95M1.mp4" title="Putar">▶</button>
+          <button class="btn btn-info"
+                  data-title="Hero: Aksi Spektakuler"
+                  data-rating="⭐ 9.0"
+                  data-url="https://www.w3schools.com/html/mov_bbb.mp4">ℹ Info</button>
         </div>
       </div>
     </div>
-    <div class="hero-slide" data-title="Hero Film 2" data-rating="⭐ 9.0" data-url="https://cdn.videy.co/bF00LZV31.mp4">
-      <video autoplay muted loop>
-        <source src="https://cdn.videy.co/bF00LZV31.mp4" type="video/mp4">
+
+    <div class="hero-slide">
+      <video autoplay muted loop playsinline>
+        <source src="https://www.w3schools.com/html/movie.mp4" type="video/mp4"/>
       </video>
-      <div class="overlay">
-        <h1>Hero Film 2</h1>
-        <div class="rating">⭐ 9.0</div>
-        <p>Drama romantis penuh emosi.</p>
-        <div>
-          <button class="btn-play" data-url="https://cdn.videy.co/bF00LZV31.mp4">▶</button>
-          <button class="btn-info" data-title="Hero Film 2" data-rating="⭐ 9.0" data-url="https://cdn.videy.co/bF00LZV31.mp4">More Info</button>
+      <div class="hero-overlay">
+        <h1>Hero: Dunia Misteri</h1>
+        <p>Rahasia gelap terkuak dalam kisah menegangkan.</p>
+        <div class="badges">
+          <span class="pill">Top 10</span><span class="pill">4K</span>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="btn btn-play" data-url="https://cdn.videy.co/YCp8BT4K1.mp4" title="Putar">▶</button>
+          <button class="btn btn-info"
+                  data-title="Hero: Dunia Misteri"
+                  data-rating="⭐ 8.7"
+                  data-url="https://cdn.videy.co/YCp8BT4K1.mp4">ℹ Info</button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ROW 1 -->
-  <section class="row">
-    <h2>Trending Now</h2>
-    <button class="nav-btn nav-left">❮</button>
-    <button class="nav-btn nav-right">❯</button>
-    <div class="carousel">
-      <!-- 12 cards -->
-      <div class="card" data-title="Film 1" data-rating="⭐ 7.8" data-url="https://cdn.videy.co/YCp8BT4K1.mp4"><img src="https://videyceo-ops.github.io/Vdghj3qe1.mp4/1.jpg"><div class="rating">⭐ 7.8</div></div>
-      <div class="card" data-title="Film 2" data-rating="⭐ 9.1" data-url="https://vdyceo678y.github.io/9RRDFBCg1.mp4"><img src="https://videyceo-ops.github.io/9RRDFBCg1.mp4/2.jpg"><div class="rating">⭐ 9.1</div></div>
-      <div class="card" data-title="Film 3" data-rating="⭐ 8.3" data-url="https://vdyceo678y.github.io/HQ2HFg1n1.mp4"><img src="https://videyceo-ops.github.io/HQ2HFg1n1.mp4/3.jpg"><div class="rating">⭐ 8.3</div></div>
-      <div class="card" data-title="Film 4" data-rating="⭐ 7.5" data-url="https://vdyceo678y.github.io/2rVtS1zX1.mp4"><img src="https://videyceo-ops.github.io/2rVtS1zX1.mp4/4.jpg"><div class="rating">⭐ 7.5</div></div>
-      <div class="card" data-title="Film 5" data-rating="⭐ 8.0" data-url="https://vdyceo678y.github.io/X01bycJc1.mp4"><img src="https://videyceo-ops.github.io/X01bycJc1.mp4/5.jpg"><div class="rating">⭐ 8.0</div></div>
-      <div class="card" data-title="Film 6" data-rating="⭐ 9.2" data-url="https://vdyceo678y.github.io/ccjlsQuF1.mp4"><img src="https://github.com/videyceo-ops/X0wb4TG31.mp4/blob/main/6.jpg"><div class="rating">⭐ 9.2</div></div>
-      <div class="card" data-title="Film 7" data-rating="⭐ 8.1" data-url="https://vdyceo678y.github.io/ccJKONKg1.mp4"><img src="https://github.com/videyceo-ops/X0wb4TG31.mp4/blob/main/7.jpg"><div class="rating">⭐ 8.1</div></div>
-      <div class="card" data-title="Film 8" data-rating="⭐ 7.9" data-url="https://vdyceo678y.github.io/JmqrrOnf1.mp4"><img src="https://github.com/videyceo-ops/X0wb4TG31.mp4/blob/main/8.jpg"><div class="rating">⭐ 7.9</div></div>
-      <div class="card" data-title="Film 9" data-rating="⭐ 8.7" data-url="https://vdyceo678y.github.io/7m9yIP491.mp4"><img src="https://github.com/videyceo-ops/X0wb4TG31.mp4/blob/main/9.jpg"><div class="rating">⭐ 8.7</div></div>
-      <div class="card" data-title="Film 10" data-rating="⭐ 8.4" data-url="https://vdyceo678y.github.io/iwZYVTLx1.mp4"><img src="https://github.com/videyceo-ops/X0wb4TG31.mp4/blob/main/10.jpg"><div class="rating">⭐ 8.4</div></div>
-      <div class="card" data-title="Film 11" data-rating="⭐ 7.6" data-url="https://vdyceo678y.github.io/Szmectu51.mp4"><img src="https://github.com/videyceo-ops/X0wb4TG31.mp4/blob/main/11.jpg"><div class="rating">⭐ 7.6</div></div>
-      <div class="card" data-title="Film 12" data-rating="⭐ 9.0" data-url="https://vdyceo678y.github.io/V5YICRMn1.mp4"><img src="https://github.com/videyceo-ops/X0wb4TG31.mp4/blob/main/12.jpg"><div class="rating">⭐ 9.0</div></div>
-    </div>
-  </section>
+  <main>
+    <!-- ROW 1 -->
+    <section class="row" aria-label="Populer">
+      <h2 class="row-title">Populer</h2>
+      <button class="nav-btn nav-left" aria-label="Geser kiri">❮</button>
+      <button class="nav-btn nav-right" aria-label="Geser kanan">❯</button>
+      <div class="carousel">
+        <!-- 12 CARD TANPA GAMBAR -->
+        <div class="card" data-title="Film 1" data-rating="⭐ 8.5" data-url="https://raw.ilossvidey-co.github.io/xxxcdnvideycoc.mp4/">
+          <div class="rating-badge">⭐ 8.5</div><div class="c-title">Film 1</div><div class="c-meta">Aksi • 120m</div>
+        </div>
+        <div class="card" data-title="Film 2" data-rating="⭐ 7.9" data-url="https://raw.githubusercontent.com/username/repo/main/video2.mp4">
+          <div class="rating-badge">⭐ 7.9</div><div class="c-title">Film 2</div><div class="c-meta">Drama • 98m</div>
+        </div>
+        <div class="card" data-title="Film 3" data-rating="⭐ 9.1" data-url="https://raw.githubusercontent.com/username/repo/main/video3.mp4">
+          <div class="rating-badge">⭐ 9.1</div><div class="c-title">Film 3</div><div class="c-meta">Sci-Fi • 134m</div>
+        </div>
+        <div class="card" data-title="Film 4" data-rating="⭐ 7.4" data-url="https://raw.githubusercontent.com/username/repo/main/video4.mp4">
+          <div class="rating-badge">⭐ 7.4</div><div class="c-title">Film 4</div><div class="c-meta">Komedi • 102m</div>
+        </div>
+        <div class="card" data-title="Film 5" data-rating="⭐ 8.7" data-url="https://raw.githubusercontent.com/username/repo/main/video5.mp4">
+          <div class="rating-badge">⭐ 8.7</div><div class="c-title">Film 5</div><div class="c-meta">Thriller • 110m</div>
+        </div>
+        <div class="card" data-title="Film 6" data-rating="⭐ 9.0" data-url="https://raw.githubusercontent.com/username/repo/main/video6.mp4">
+          <div class="rating-badge">⭐ 9.0</div><div class="c-title">Film 6</div><div class="c-meta">Aksi • 128m</div>
+        </div>
+        <div class="card" data-title="Film 7" data-rating="⭐ 7.5" data-url="https://raw.githubusercontent.com/username/repo/main/video7.mp4">
+          <div class="rating-badge">⭐ 7.5</div><div class="c-title">Film 7</div><div class="c-meta">Drama • 115m</div>
+        </div>
+        <div class="card" data-title="Film 8" data-rating="⭐ 8.8" data-url="https://raw.githubusercontent.com/username/repo/main/video8.mp4">
+          <div class="rating-badge">⭐ 8.8</div><div class="c-title">Film 8</div><div class="c-meta">Petualangan • 140m</div>
+        </div>
+        <div class="card" data-title="Film 9" data-rating="⭐ 7.3" data-url="https://raw.githubusercontent.com/username/repo/main/video9.mp4">
+          <div class="rating-badge">⭐ 7.3</div><div class="c-title">Film 9</div><div class="c-meta">Horor • 100m</div>
+        </div>
+        <div class="card" data-title="Film 10" data-rating="⭐ 8.4" data-url="https://raw.githubusercontent.com/username/repo/main/video10.mp4">
+          <div class="rating-badge">⭐ 8.4</div><div class="c-title">Film 10</div><div class="c-meta">Aksi • 123m</div>
+        </div>
+        <div class="card" data-title="Film 11" data-rating="⭐ 8.0" data-url="https://raw.githubusercontent.com/username/repo/main/video11.mp4">
+          <div class="rating-badge">⭐ 8.0</div><div class="c-title">Film 11</div><div class="c-meta">Misteri • 108m</div>
+        </div>
+        <div class="card" data-title="Film 12" data-rating="⭐ 9.6" data-url="https://raw.githubusercontent.com/username/repo/main/video12.mp4">
+          <div class="rating-badge">⭐ 9.6</div><div class="c-title">Film 12</div><div class="c-meta">Epos • 155m</div>
+        </div>
+      </div>
+    </section>
 
-  <!-- ROW 2 -->
-  <section class="row">
-    <h2>New Releases</h2>
-    <button class="nav-btn nav-left">❮</button>
-    <button class="nav-btn nav-right">❯</button>
-    <div class="carousel">
-      <!-- 12 cards -->
-      <div class="card" data-title="Film 13" data-rating="⭐ 8.0" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=23"><div class="rating">⭐ 8.0</div></div>
-      <div class="card" data-title="Film 14" data-rating="⭐ 7.9" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=24"><div class="rating">⭐ 7.9</div></div>
-      <div class="card" data-title="Film 15" data-rating="⭐ 8.4" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=25"><div class="rating">⭐ 8.4</div></div>
-      <div class="card" data-title="Film 16" data-rating="⭐ 9.3" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=26"><div class="rating">⭐ 9.3</div></div>
-      <div class="card" data-title="Film 17" data-rating="⭐ 7.7" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=27"><div class="rating">⭐ 7.7</div></div>
-      <div class="card" data-title="Film 18" data-rating="⭐ 8.5" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=28"><div class="rating">⭐ 8.5</div></div>
-      <div class="card" data-title="Film 19" data-rating="⭐ 9.0" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=29"><div class="rating">⭐ 9.0</div></div>
-      <div class="card" data-title="Film 20" data-rating="⭐ 8.2" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=30"><div class="rating">⭐ 8.2</div></div>
-      <div class="card" data-title="Film 21" data-rating="⭐ 7.5" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=31"><div class="rating">⭐ 7.5</div></div>
-      <div class="card" data-title="Film 22" data-rating="⭐ 8.8" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=32"><div class="rating">⭐ 8.8</div></div>
-      <div class="card" data-title="Film 23" data-rating="⭐ 7.9" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=33"><div class="rating">⭐ 7.9</div></div>
-      <div class="card" data-title="Film 24" data-rating="⭐ 9.4" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=34"><div class="rating">⭐ 9.4</div></div>
-    </div>
-  </section>
+    <!-- ROW 2 -->
+    <section class="row" aria-label="Baru Rilis">
+      <h2 class="row-title">Baru Rilis</h2>
+      <button class="nav-btn nav-left" aria-label="Geser kiri">❮</button>
+      <button class="nav-btn nav-right" aria-label="Geser kanan">❯</button>
+      <div class="carousel">
+        <div class="card" data-title="Film 13" data-rating="⭐ 8.5" data-url="https://raw.githubusercontent.com/username/repo/main/video13.mp4"><div class="rating-badge">⭐ 8.5</div><div class="c-title">Film 13</div><div class="c-meta">Aksi • 120m</div></div>
+        <div class="card" data-title="Film 14" data-rating="⭐ 7.9" data-url="https://raw.githubusercontent.com/username/repo/main/video14.mp4"><div class="rating-badge">⭐ 7.9</div><div class="c-title">Film 14</div><div class="c-meta">Drama • 99m</div></div>
+        <div class="card" data-title="Film 15" data-rating="⭐ 9.1" data-url="https://raw.githubusercontent.com/username/repo/main/video15.mp4"><div class="rating-badge">⭐ 9.1</div><div class="c-title">Film 15</div><div class="c-meta">Sci-Fi • 130m</div></div>
+        <div class="card" data-title="Film 16" data-rating="⭐ 7.4" data-url="https://raw.githubusercontent.com/username/repo/main/video16.mp4"><div class="rating-badge">⭐ 7.4</div><div class="c-title">Film 16</div><div class="c-meta">Komedi • 101m</div></div>
+        <div class="card" data-title="Film 17" data-rating="⭐ 8.7" data-url="https://raw.githubusercontent.com/username/repo/main/video17.mp4"><div class="rating-badge">⭐ 8.7</div><div class="c-title">Film 17</div><div class="c-meta">Thriller • 111m</div></div>
+        <div class="card" data-title="Film 18" data-rating="⭐ 9.0" data-url="https://raw.githubusercontent.com/username/repo/main/video18.mp4"><div class="rating-badge">⭐ 9.0</div><div class="c-title">Film 18</div><div class="c-meta">Aksi • 128m</div></div>
+        <div class="card" data-title="Film 19" data-rating="⭐ 7.5" data-url="https://raw.githubusercontent.com/username/repo/main/video19.mp4"><div class="rating-badge">⭐ 7.5</div><div class="c-title">Film 19</div><div class="c-meta">Drama • 115m</div></div>
+        <div class="card" data-title="Film 20" data-rating="⭐ 8.8" data-url="https://raw.githubusercontent.com/username/repo/main/video20.mp4"><div class="rating-badge">⭐ 8.8</div><div class="c-title">Film 20</div><div class="c-meta">Petualangan • 140m</div></div>
+        <div class="card" data-title="Film 21" data-rating="⭐ 7.3" data-url="https://raw.githubusercontent.com/username/repo/main/video21.mp4"><div class="rating-badge">⭐ 7.3</div><div class="c-title">Film 21</div><div class="c-meta">Horor • 100m</div></div>
+        <div class="card" data-title="Film 22" data-rating="⭐ 8.4" data-url="https://raw.githubusercontent.com/username/repo/main/video22.mp4"><div class="rating-badge">⭐ 8.4</div><div class="c-title">Film 22</div><div class="c-meta">Aksi • 123m</div></div>
+        <div class="card" data-title="Film 23" data-rating="⭐ 8.0" data-url="https://raw.githubusercontent.com/username/repo/main/video23.mp4"><div class="rating-badge">⭐ 8.0</div><div class="c-title">Film 23</div><div class="c-meta">Misteri • 108m</div></div>
+        <div class="card" data-title="Film 24" data-rating="⭐ 9.6" data-url="https://raw.githubusercontent.com/username/repo/main/video24.mp4"><div class="rating-badge">⭐ 9.6</div><div class="c-title">Film 24</div><div class="c-meta">Epos • 155m</div></div>
+      </div>
+    </section>
 
-  <!-- ROW 3 -->
-  <section class="row">
-    <h2>Top Rated</h2>
-    <button class="nav-btn nav-left">❮</button>
-    <button class="nav-btn nav-right">❯</button>
-    <div class="carousel">
-      <!-- 12 cards -->
-      <div class="card" data-title="Film 25" data-rating="⭐ 9.1" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=35"><div class="rating">⭐ 9.1</div></div>
-      <div class="card" data-title="Film 26" data-rating="⭐ 7.8" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=36"><div class="rating">⭐ 7.8</div></div>
-      <div class="card" data-title="Film 27" data-rating="⭐ 8.2" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=37"><div class="rating">⭐ 8.2</div></div>
-      <div class="card" data-title="Film 28" data-rating="⭐ 9.5" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=38"><div class="rating">⭐ 9.5</div></div>
-      <div class="card" data-title="Film 29" data-rating="⭐ 7.6" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=39"><div class="rating">⭐ 7.6</div></div>
-      <div class="card" data-title="Film 30" data-rating="⭐ 8.7" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=40"><div class="rating">⭐ 8.7</div></div>
-      <div class="card" data-title="Film 31" data-rating="⭐ 8.9" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=41"><div class="rating">⭐ 8.9</div></div>
-      <div class="card" data-title="Film 32" data-rating="⭐ 7.4" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=42"><div class="rating">⭐ 7.4</div></div>
-      <div class="card" data-title="Film 33" data-rating="⭐ 9.2" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=43"><div class="rating">⭐ 9.2</div></div>
-      <div class="card" data-title="Film 34" data-rating="⭐ 7.7" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=44"><div class="rating">⭐ 7.7</div></div>
-      <div class="card" data-title="Film 35" data-rating="⭐ 8.3" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=45"><div class="rating">⭐ 8.3</div></div>
-      <div class="card" data-title="Film 36" data-rating="⭐ 9.6" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=46"><div class="rating">⭐ 9.6</div></div>
-    </div>
-  </section>
+    <!-- ROW 3 -->
+    <section class="row" aria-label="Direkomendasikan">
+      <h2 class="row-title">Direkomendasikan</h2>
+      <button class="nav-btn nav-left" aria-label="Geser kiri">❮</button>
+      <button class="nav-btn nav-right" aria-label="Geser kanan">❯</button>
+      <div class="carousel">
+        <div class="card" data-title="Film 25" data-rating="⭐ 8.5" data-url="https://raw.githubusercontent.com/username/repo/main/video25.mp4"><div class="rating-badge">⭐ 8.5</div><div class="c-title">Film 25</div><div class="c-meta">Aksi • 120m</div></div>
+        <div class="card" data-title="Film 26" data-rating="⭐ 7.9" data-url="https://raw.githubusercontent.com/username/repo/main/video26.mp4"><div class="rating-badge">⭐ 7.9</div><div class="c-title">Film 26</div><div class="c-meta">Drama • 99m</div></div>
+        <div class="card" data-title="Film 27" data-rating="⭐ 9.1" data-url="https://raw.githubusercontent.com/username/repo/main/video27.mp4"><div class="rating-badge">⭐ 9.1</div><div class="c-title">Film 27</div><div class="c-meta">Sci-Fi • 130m</div></div>
+        <div class="card" data-title="Film 28" data-rating="⭐ 7.4" data-url="https://raw.githubusercontent.com/username/repo/main/video28.mp4"><div class="rating-badge">⭐ 7.4</div><div class="c-title">Film 28</div><div class="c-meta">Komedi • 101m</div></div>
+        <div class="card" data-title="Film 29" data-rating="⭐ 8.7" data-url="https://raw.githubusercontent.com/username/repo/main/video29.mp4"><div class="rating-badge">⭐ 8.7</div><div class="c-title">Film 29</div><div class="c-meta">Thriller • 111m</div></div>
+        <div class="card" data-title="Film 30" data-rating="⭐ 8.9" data-url="https://raw.githubusercontent.com/username/repo/main/video30.mp4"><div class="rating-badge">⭐ 8.9</div><div class="c-title">Film 30</div><div class="c-meta">Aksi • 124m</div></div>
+        <div class="card" data-title="Film 31" data-rating="⭐ 7.6" data-url="https://raw.githubusercontent.com/username/repo/main/video31.mp4"><div class="rating-badge">⭐ 7.6</div><div class="c-title">Film 31</div><div class="c-meta">Drama • 112m</div></div>
+        <div class="card" data-title="Film 32" data-rating="⭐ 8.3" data-url="https://raw.githubusercontent.com/username/repo/main/video32.mp4"><div class="rating-badge">⭐ 8.3</div><div class="c-title">Film 32</div><div class="c-meta">Petualangan • 142m</div></div>
+        <div class="card" data-title="Film 33" data-rating="⭐ 8.2" data-url="https://raw.githubusercontent.com/username/repo/main/video33.mp4"><div class="rating-badge">⭐ 8.2</div><div class="c-title">Film 33</div><div class="c-meta">Aksi • 117m</div></div>
+        <div class="card" data-title="Film 34" data-rating="⭐ 7.7" data-url="https://raw.githubusercontent.com/username/repo/main/video34.mp4"><div class="rating-badge">⭐ 7.7</div><div class="c-title">Film 34</div><div class="c-meta">Komedi • 104m</div></div>
+        <div class="card" data-title="Film 35" data-rating="⭐ 8.4" data-url="https://raw.githubusercontent.com/username/repo/main/video35.mp4"><div class="rating-badge">⭐ 8.4</div><div class="c-title">Film 35</div><div class="c-meta">Misteri • 109m</div></div>
+        <div class="card" data-title="Film 36" data-rating="⭐ 9.6" data-url="https://raw.githubusercontent.com/username/repo/main/video36.mp4"><div class="rating-badge">⭐ 9.6</div><div class="c-title">Film 36</div><div class="c-meta">Epos • 158m</div></div>
+      </div>
+    </section>
+  </main>
 
-  <!-- Modal Info -->
-  <div class="modal" id="infoModal">
+  <!-- MODAL INFO -->
+  <div class="modal" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
     <div class="modal-content">
-      <div class="close" onclick="closeModal('infoModal')">✖</div>
-      <h2 id="infoTitle"></h2>
-      <p id="infoRating"></p>
-      <button class="btn-play" id="infoPlay">▶</button>
+      <button class="close" aria-label="Tutup" onclick="closeModal('infoModal')">✖</button>
+      <h2 id="infoTitle">Judul</h2>
+      <p id="infoRating">⭐ 0.0</p>
+      <button class="btn btn-play" id="infoPlay" title="Putar">▶</button>
     </div>
   </div>
 
-  <!-- Player Modal -->
-  <div class="player-modal" id="playerModal">
+  <!-- MODAL PLAYER -->
+  <div class="player-modal" id="playerModal" role="dialog" aria-modal="true" aria-label="Pemutar Video">
     <div class="player-content">
-      <div class="close" onclick="closeModal('playerModal')">✖</div>
-      <video id="playerVideo" width="100%" controls></video>
+      <button class="close" aria-label="Tutup" onclick="closeModal('playerModal')">✖</button>
+      <video id="playerVideo" controls playsinline></video>
     </div>
   </div>
 
   <footer>© 2025 MyFlix. All Rights Reserved.</footer>
 
-  <script>
-    // Navbar bg
-    window.addEventListener('scroll',()=>{document.querySelector('header').classList.toggle('scrolled',window.scrollY>50);});
+<script>
+/* ===== Navbar background on scroll ===== */
+window.addEventListener('scroll',()=>document.querySelector('header')
+  .classList.toggle('scrolled',window.scrollY>30));
 
-    // Hero auto rotate
-    let slides=document.querySelectorAll('.hero-slide');let idx=0;
-    setInterval(()=>{slides[idx].classList.remove('active');idx=(idx+1)%slides.length;slides[idx].classList.add('active');},6000);
+/* ===== Hero auto-rotate ===== */
+const slides=[...document.querySelectorAll('.hero-slide')];
+let heroIdx=0;
+setInterval(()=>{
+  slides[heroIdx].classList.remove('active');
+  heroIdx=(heroIdx+1)%slides.length;
+  slides[heroIdx].classList.add('active');
+}, 8000);
 
-    // Card click open info
-    document.querySelectorAll('.card').forEach(c=>{
-      c.addEventListener('click',()=>{
-        document.getElementById('infoTitle').textContent=c.dataset.title;
-        document.getElementById('infoRating').textContent=c.dataset.rating;
-        document.getElementById('infoPlay').setAttribute('data-url',c.dataset.url);
-        document.getElementById('infoModal').classList.add('show');
-      });
-    });
+/* ===== Card → open Info modal ===== */
+document.querySelectorAll('.card').forEach(card=>{
+  card.addEventListener('click',()=>{
+    const {title, rating, url} = card.dataset;
+    document.getElementById('infoTitle').textContent = title;
+    document.getElementById('infoRating').textContent = rating;
+    document.getElementById('infoPlay').setAttribute('data-url', url);
+    openModal('infoModal');
+  });
+});
 
-    // Info modal play
-    document.getElementById('infoPlay').addEventListener('click',e=>{
-      let url=e.target.getAttribute('data-url'); playVideo(url);
-    });
+/* ===== Info modal: Play button ===== */
+document.getElementById('infoPlay').addEventListener('click', (e)=>{
+  const url = e.currentTarget.getAttribute('data-url');
+  playVideo(url);
+});
 
-    // Hero buttons
-    document.querySelectorAll('.btn-play').forEach(b=>b.addEventListener('click',()=>playVideo(b.dataset.url)));
-    document.querySelectorAll('.btn-info').forEach(b=>b.addEventListener('click',()=>{
-      document.getElementById('infoTitle').textContent=b.dataset.title;
-      document.getElementById('infoRating').textContent=b.dataset.rating;
-      document.getElementById('infoPlay').setAttribute('data-url',b.dataset.url);
-      document.getElementById('infoModal').classList.add('show');
-    }));
+/* ===== Hero buttons ===== */
+document.querySelectorAll('.btn-play').forEach(b=>b.addEventListener('click',()=>playVideo(b.dataset.url)));
+document.querySelectorAll('.btn-info').forEach(b=>b.addEventListener('click',()=>{
+  document.getElementById('infoTitle').textContent=b.dataset.title;
+  document.getElementById('infoRating').textContent=b.dataset.rating;
+  document.getElementById('infoPlay').setAttribute('data-url',b.dataset.url);
+  openModal('infoModal');
+}));
 
-    function playVideo(url){
-      let v=document.getElementById('playerVideo'); v.src=url; v.play();
-      document.getElementById('playerModal').classList.add('show');
-    }
-    function closeModal(id){
-      document.getElementById(id).classList.remove('show');
-      if(id==='playerModal'){let v=document.getElementById('playerVideo'); v.pause(); v.src='';}
-    }
+/* ===== Player control ===== */
+function playVideo(url){
+  const v=document.getElementById('playerVideo');
+  v.src=url;               // gunakan raw.githubusercontent.com untuk GitHub
+  v.play().catch(()=>{});  // menghindari error autoplay
+  openModal('playerModal');
+}
+function openModal(id){
+  const el=document.getElementById(id);
+  el.classList.add('show');
+  // untuk aksesibilitas: ESC menutup
+  const handleEsc=(e)=>{ if(e.key==='Escape'){ closeModal(id); document.removeEventListener('keydown',handleEsc); } };
+  document.addEventListener('keydown',handleEsc);
+}
+function closeModal(id){
+  const el=document.getElementById(id);
+  el.classList.remove('show');
+  if(id==='playerModal'){
+    const v=document.getElementById('playerVideo');
+    v.pause(); v.src='';
+  }
+}
 
-    // Carousel drag scroll + arrows
-    document.querySelectorAll('.row').forEach(row=>{
-      let carousel=row.querySelector('.carousel');
-      let left=row.querySelector('.nav-left');
-      let right=row.querySelector('.nav-right');
+/* ===== Carousel: drag-to-scroll + arrows + touch ===== */
+document.querySelectorAll('.row').forEach(row=>{
+  const carousel = row.querySelector('.carousel');
+  const left = row.querySelector('.nav-left');
+  const right = row.querySelector('.nav-right');
 
-      // Drag
-      let down=false,startX,scrollL;
-      carousel.addEventListener('mousedown',e=>{down=true;startX=e.pageX-carousel.offsetLeft;scrollL=carousel.scrollLeft;});
-      carousel.addEventListener('mouseleave',()=>{down=false;});
-      carousel.addEventListener('mouseup',()=>{down=false;});
-      carousel.addEventListener('mousemove',e=>{
-        if(!down)return;e.preventDefault();
-        let x=e.pageX-carousel.offsetLeft;let walk=(x-startX)*2;carousel.scrollLeft=scrollL-walk;
-      });
+  let isDown=false,startX,scrollL;
+  const down=(clientX)=>{isDown=true;startX=clientX-carousel.getBoundingClientRect().left;scrollL=carousel.scrollLeft}
+  const move=(clientX)=>{
+    if(!isDown) return;
+    const x = clientX-carousel.getBoundingClientRect().left;
+    const walk = (x-startX)*1.8;
+    carousel.scrollLeft = scrollL - walk;
+  }
+  const up=()=>{isDown=false}
 
-      // Arrow click
-      left.addEventListener('click',()=>{carousel.scrollBy({left:-900,behavior:'smooth'});});
-      right.addEventListener('click',()=>{carousel.scrollBy({left:900,behavior:'smooth'});});
-    });
-  </script>
+  // Mouse
+  carousel.addEventListener('mousedown',e=>down(e.clientX));
+  window.addEventListener('mousemove',e=>move(e.clientX));
+  window.addEventListener('mouseup',up);
+
+  // Touch
+  carousel.addEventListener('touchstart',e=>down(e.touches[0].clientX),{passive:true});
+  carousel.addEventListener('touchmove',e=>move(e.touches[0].clientX),{passive:true});
+  carousel.addEventListener('touchend',up);
+
+  // Arrows
+  left.addEventListener('click',()=>carousel.scrollBy({left:-Math.min(900,carousel.clientWidth*0.9),behavior:'smooth'}));
+  right.addEventListener('click',()=>carousel.scrollBy({left: Math.min(900,carousel.clientWidth*0.9),behavior:'smooth'}));
+});
+</script>
 </body>
 </html>
