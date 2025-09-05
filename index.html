@@ -5,357 +5,263 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyFlix - Streaming</title>
   <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-    /* Navbar */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 15px 40px;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 1000;
-      transition: background 0.4s;
-    }
-    header.scrolled {
-      background: rgba(0,0,0,0.9);
-    }
-    header .logo {
-      font-size: 26px;
-      font-weight: bold;
-      color: #e50914;
-    }
-    header nav a {
-      margin-left: 20px;
-      text-decoration: none;
-      color: #fff;
-      font-size: 14px;
-    }
+    body { margin:0; background:#000; color:#fff; font-family:Arial,sans-serif; overflow-x:hidden; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:15px 40px;
+      position:fixed; top:0; left:0; right:0; z-index:1000; transition:background .4s; }
+    header.scrolled { background:rgba(0,0,0,.9); }
+    .logo { font-size:26px; font-weight:bold; color:#e50914; }
+    nav a { margin-left:20px; text-decoration:none; color:#fff; font-size:14px; }
+
     /* Hero */
-    .hero {
-      position: relative;
-      height: 80vh;
-      margin-top: 60px;
-      overflow: hidden;
+    .hero { position:relative; height:80vh; margin-top:60px; overflow:hidden; }
+    .hero-slide { position:absolute; inset:0; opacity:0; transition:opacity 1s ease; }
+    .hero-slide.active { opacity:1; z-index:1; }
+    .hero-slide video { width:100%; height:100%; object-fit:cover; }
+    .overlay {
+      position:absolute; inset:0;
+      background:linear-gradient(to top,rgba(0,0,0,0.85),rgba(0,0,0,0.3));
+      display:flex; flex-direction:column; justify-content:center;
+      padding:0 60px; animation:fadeUp 1s ease forwards;
     }
-    .hero img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .hero .overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3));
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 0 60px;
-    }
-    .hero h1 {
-      font-size: 48px;
-      margin: 0;
-    }
-    .hero .rating {
-      font-size: 16px;
-      margin-top: 8px;
-      color: gold;
-    }
-    .hero p {
-      max-width: 600px;
-      margin: 20px 0;
-      font-size: 18px;
-    }
-    /* Tombol */
-    .btn-play {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      border: none;
-      background: #e50914;
-      color: #fff;
-      font-size: 24px;
-      cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .btn-play:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 20px #e50914;
-    }
-    .btn-info {
-      background: rgba(109,109,110,0.7);
-      border: none;
-      padding: 12px 20px;
-      margin-left: 10px;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-      color: #fff;
-      transition: background 0.3s;
-    }
-    .btn-info:hover {
-      background: rgba(29,155,240,0.8);
-    }
-    /* Row */
-    .row {
-      padding: 20px 40px;
-      position: relative;
-    }
-    .row h2 {
-      margin: 0 0 10px 0;
-    }
-    .carousel {
-      display: flex;
-      overflow-x: auto;
-      scroll-behavior: smooth;
-    }
-    .carousel::-webkit-scrollbar {
-      display: none;
-    }
-    .card {
-      position: relative;
-      flex: 0 0 auto;
-      margin-right: 10px;
-      transition: transform 0.3s;
-    }
-    .card img {
-      width: 180px;
-      border-radius: 6px;
-      display: block;
-    }
-    .card:hover {
-      transform: scale(1.1);
-      z-index: 10;
-    }
-    .card .rating {
-      position: absolute;
-      top: 8px; left: 8px;
-      background: rgba(0,0,0,0.7);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-      color: gold;
-    }
+    .overlay h1 { font-size:48px; margin:0; }
+    .overlay .rating { color:gold; margin:8px 0; }
+    .overlay p { max-width:600px; font-size:18px; margin:20px 0; }
+
+    /* Buttons */
+    .btn-play { width:60px; height:60px; border-radius:50%; border:none;
+      background:#e50914; color:#fff; font-size:24px; cursor:pointer;
+      transition:transform .3s, box-shadow .3s; animation:pulse 2s infinite; }
+    .btn-play:hover { transform:scale(1.2) rotate(10deg); box-shadow:0 0 25px #e50914; }
+    .btn-info { background:rgba(109,109,110,0.7); border:none; padding:12px 20px; margin-left:10px;
+      border-radius:4px; font-size:16px; cursor:pointer; color:#fff;
+      transition:transform .3s, background .3s, box-shadow .3s; }
+    .btn-info:hover { transform:translateY(-3px); background:rgba(29,155,240,0.9); box-shadow:0 0 15px rgba(29,155,240,.9); }
+
+    /* Rows */
+    .row { padding:20px 40px; position:relative; }
+    .row h2 { margin:0 0 10px 0; }
+    .carousel { display:flex; overflow-x:auto; scroll-behavior:smooth; cursor:grab; }
+    .carousel::-webkit-scrollbar { display:none; }
+    .card { flex:0 0 auto; margin-right:10px; position:relative; cursor:pointer;
+      transition:transform .3s, box-shadow .3s; }
+    .card img { width:180px; border-radius:6px; display:block; }
+    .card:hover { transform:scale(1.1) translateY(-5px); z-index:10; box-shadow:0 0 25px rgba(229,9,20,0.8); }
+    .card .rating { position:absolute; top:8px; left:8px; background:rgba(0,0,0,.7);
+      padding:2px 6px; border-radius:4px; font-size:12px; color:gold; }
+
     /* Nav arrows */
-    .arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 32px;
-      cursor: pointer;
-      background: rgba(0,0,0,0.5);
-      border-radius: 50%;
-      padding: 6px 12px;
-      user-select: none;
-    }
-    .arrow.left { left: 10px; }
-    .arrow.right { right: 10px; }
+    .nav-btn { position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5);
+      border:none; color:#fff; font-size:28px; width:50px; height:80px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; opacity:0.5; transition:0.3s; z-index:5; }
+    .nav-btn:hover { opacity:1; background:rgba(0,0,0,0.8); }
+    .nav-left { left:0; border-radius:0 5px 5px 0; }
+    .nav-right { right:0; border-radius:5px 0 0 5px; }
+
     /* Modal */
-    .modal, .player-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      animation: fadeIn 0.3s ease;
-    }
-    .modal-content, .player-content {
-      background: #111;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 600px;
-      width: 90%;
-      position: relative;
-      animation: zoomIn 0.3s ease;
-      text-align: center;
-    }
-    .modal-content h3 {
-      margin: 10px 0;
-    }
-    .modal-content .rating {
-      color: gold;
-      margin-bottom: 15px;
-    }
-    .close {
-      position: absolute;
-      top: 10px; right: 15px;
-      font-size: 24px;
-      cursor: pointer;
-    }
-    @keyframes fadeIn { from {opacity:0} to {opacity:1} }
-    @keyframes zoomIn { from {transform: scale(0.8); opacity:0} to {transform: scale(1); opacity:1} }
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 20px;
-      background: #111;
-      margin-top: 40px;
-      color: #aaa;
-      font-size: 14px;
-    }
+    .modal,.player-modal { position:fixed; inset:0; background:rgba(0,0,0,.85);
+      display:none; align-items:center; justify-content:center; z-index:2000; }
+    .modal.show,.player-modal.show { display:flex; animation:fadeInZoom .4s ease; }
+    .modal-content,.player-content { background:#111; padding:20px; border-radius:8px; width:90%; max-width:600px; text-align:center; position:relative; }
+    .close { position:absolute; top:15px; right:15px; width:35px; height:35px; border-radius:50%; background:rgba(255,255,255,0.15);
+      color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center;
+      cursor:pointer; transition:background .3s, transform .3s; }
+    .close:hover { background:#e50914; transform:rotate(90deg) scale(1.1); }
+
+    footer { text-align:center; padding:20px; background:#111; margin-top:40px; color:#aaa; font-size:14px; }
+
+    /* Animations */
+    @keyframes fadeUp { from{opacity:0; transform:translateY(30px);} to{opacity:1; transform:translateY(0);} }
+    @keyframes fadeInZoom { from{opacity:0; transform:scale(.8);} to{opacity:1; transform:scale(1);} }
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(229,9,20,0.7);} 70%{box-shadow:0 0 0 20px rgba(229,9,20,0);} 100%{box-shadow:0 0 0 0 rgba(229,9,20,0);} }
   </style>
 </head>
 <body>
   <header>
     <div class="logo">MyFlix</div>
     <nav>
-      <a href="#">Home</a>
-      <a href="#">Movies</a>
-      <a href="#">Series</a>
+      <a href="#">Home</a><a href="#">Movies</a><a href="#">Series</a>
     </nav>
   </header>
 
   <!-- Hero -->
   <section class="hero">
-    <img id="heroBanner" src="" alt="Banner">
-    <div class="overlay">
-      <h1 id="heroTitle"></h1>
-      <div class="rating" id="heroRating"></div>
-      <p id="heroDesc"></p>
-      <div>
-        <button class="btn-play" id="heroPlay">▶</button>
-        <button class="btn-info" id="heroInfo">More Info</button>
+    <div class="hero-slide active" data-title="Hero Film 1" data-rating="⭐ 8.5" data-url="https://www.w3schools.com/html/mov_bbb.mp4">
+      <video autoplay muted loop>
+        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+      </video>
+      <div class="overlay">
+        <h1>Hero Film 1</h1>
+        <div class="rating">⭐ 8.5</div>
+        <p>She does it again.</p>
+        <div>
+          <button class="btn-play" data-url="https://vdyceo678y.github.io/Vdghj3qe1.mp4/">▶</button>
+          <button class="btn-info" data-title="Hero Film 1" data-rating="⭐ 8.5" data-url="https://vdyceo678y.github.io/Vdghj3qe1.mp4/">More Info</button>
+        </div>
+      </div>
+    </div>
+    <div class="hero-slide" data-title="Hero Film 2" data-rating="⭐ 9.0" data-url="https://vdyceo678y.github.io/9RRDFBCg1.mp4/">
+      <video autoplay muted loop>
+        <source src="https://www.w3schools.com/html/movie.mp4" type="video/mp4">
+      </video>
+      <div class="overlay">
+        <h1>Hero Film 2</h1>
+        <div class="rating">⭐ 9.0</div>
+        <p>Drama romantis penuh emosi.</p>
+        <div>
+          <button class="btn-play" data-url="https://vdyceo678y.github.io/9RRDFBCg1.mp4">▶</button>
+          <button class="btn-info" data-title="Hero Film 2" data-rating="⭐ 9.0" data-url="https://vdyceo678y.github.io/9RRDFBCg1.mp4">More Info</button>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Rows -->
+  <!-- ROW 1 -->
   <section class="row">
     <h2>Trending Now</h2>
-    <span class="arrow left" onclick="scrollRow('row1',-1)">&#10094;</span>
-    <span class="arrow right" onclick="scrollRow('row1',1)">&#10095;</span>
-    <div class="carousel" id="row1"></div>
+    <button class="nav-btn nav-left">❮</button>
+    <button class="nav-btn nav-right">❯</button>
+    <div class="carousel">
+      <!-- 12 cards -->
+      <div class="card" data-title="Film 1" data-rating="⭐ 7.8" data-url="https://vdyceo678y.github.io/Vdghj3qe1.mp4"><img src="https://vdyceo678y.github.io/Vdghj3qe1.mp4/1.jpg"><div class="rating">⭐ 7.8</div></div>
+      <div class="card" data-title="Film 2" data-rating="⭐ 9.1" data-url="https://vdyceo678y.github.io/9RRDFBCg1.mp4"><img src="https://vdyceo678y.github.io/9RRDFBCg1.mp4/2.jpg"><div class="rating">⭐ 9.1</div></div>
+      <div class="card" data-title="Film 3" data-rating="⭐ 8.3" data-url="https://vdyceo678y.github.io/HQ2HFg1n1.mp4"><img src="https://vdyceo678y.github.io/HQ2HFg1n1.mp4/3.jpg"><div class="rating">⭐ 8.3</div></div>
+      <div class="card" data-title="Film 4" data-rating="⭐ 7.5" data-url="https://vdyceo678y.github.io/2rVtS1zX1.mp4"><img src="https://vdyceo678y.github.io/2rVtS1zX1.mp4/4.jpg"><div class="rating">⭐ 7.5</div></div>
+      <div class="card" data-title="Film 5" data-rating="⭐ 8.0" data-url="https://vdyceo678y.github.io/X01bycJc1.mp4"><img src="https://vdyceo678y.github.io/X01bycJc1.mp4/5.jpg"><div class="rating">⭐ 8.0</div></div>
+      <div class="card" data-title="Film 6" data-rating="⭐ 9.2" data-url="https://vdyceo678y.github.io/ccjlsQuF1.mp4"><img src="https://vdyceo678y.github.io/ccjlsQuF1.mp4/6.jpg"><div class="rating">⭐ 9.2</div></div>
+      <div class="card" data-title="Film 7" data-rating="⭐ 8.1" data-url="https://vdyceo678y.github.io/ccJKONKg1.mp4"><img src="https://vdyceo678y.github.io/ccJKONKg1.mp4/7.jpg"><div class="rating">⭐ 8.1</div></div>
+      <div class="card" data-title="Film 8" data-rating="⭐ 7.9" data-url="https://vdyceo678y.github.io/JmqrrOnf1.mp4"><img src="https://vdyceo678y.github.io/JmqrrOnf1.mp4/8.jpg"><div class="rating">⭐ 7.9</div></div>
+      <div class="card" data-title="Film 9" data-rating="⭐ 8.7" data-url="https://vdyceo678y.github.io/7m9yIP491.mp4"><img src="https://vdyceo678y.github.io/7m9yIP491.mp4/9.jpg"><div class="rating">⭐ 8.7</div></div>
+      <div class="card" data-title="Film 10" data-rating="⭐ 8.4" data-url="https://vdyceo678y.github.io/iwZYVTLx1.mp4"><img src="https://vdyceo678y.github.io/iwZYVTLx1.mp4/10.jpg"><div class="rating">⭐ 8.4</div></div>
+      <div class="card" data-title="Film 11" data-rating="⭐ 7.6" data-url="https://vdyceo678y.github.io/Szmectu51.mp4"><img src="https://vdyceo678y.github.io/Szmectu51.mp4/11.jpg"><div class="rating">⭐ 7.6</div></div>
+      <div class="card" data-title="Film 12" data-rating="⭐ 9.0" data-url="https://vdyceo678y.github.io/V5YICRMn1.mp4"><img src="https://vdyceo678y.github.io/V5YICRMn1.mp4/12.jpg"><div class="rating">⭐ 9.0</div></div>
+    </div>
   </section>
+
+  <!-- ROW 2 -->
   <section class="row">
     <h2>New Releases</h2>
-    <span class="arrow left" onclick="scrollRow('row2',-1)">&#10094;</span>
-    <span class="arrow right" onclick="scrollRow('row2',1)">&#10095;</span>
-    <div class="carousel" id="row2"></div>
+    <button class="nav-btn nav-left">❮</button>
+    <button class="nav-btn nav-right">❯</button>
+    <div class="carousel">
+      <!-- 12 cards -->
+      <div class="card" data-title="Film 13" data-rating="⭐ 8.0" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=23"><div class="rating">⭐ 8.0</div></div>
+      <div class="card" data-title="Film 14" data-rating="⭐ 7.9" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=24"><div class="rating">⭐ 7.9</div></div>
+      <div class="card" data-title="Film 15" data-rating="⭐ 8.4" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=25"><div class="rating">⭐ 8.4</div></div>
+      <div class="card" data-title="Film 16" data-rating="⭐ 9.3" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=26"><div class="rating">⭐ 9.3</div></div>
+      <div class="card" data-title="Film 17" data-rating="⭐ 7.7" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=27"><div class="rating">⭐ 7.7</div></div>
+      <div class="card" data-title="Film 18" data-rating="⭐ 8.5" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=28"><div class="rating">⭐ 8.5</div></div>
+      <div class="card" data-title="Film 19" data-rating="⭐ 9.0" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=29"><div class="rating">⭐ 9.0</div></div>
+      <div class="card" data-title="Film 20" data-rating="⭐ 8.2" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=30"><div class="rating">⭐ 8.2</div></div>
+      <div class="card" data-title="Film 21" data-rating="⭐ 7.5" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=31"><div class="rating">⭐ 7.5</div></div>
+      <div class="card" data-title="Film 22" data-rating="⭐ 8.8" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=32"><div class="rating">⭐ 8.8</div></div>
+      <div class="card" data-title="Film 23" data-rating="⭐ 7.9" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=33"><div class="rating">⭐ 7.9</div></div>
+      <div class="card" data-title="Film 24" data-rating="⭐ 9.4" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=34"><div class="rating">⭐ 9.4</div></div>
+    </div>
   </section>
+
+  <!-- ROW 3 -->
   <section class="row">
-    <h2>Popular on MyFlix</h2>
-    <span class="arrow left" onclick="scrollRow('row3',-1)">&#10094;</span>
-    <span class="arrow right" onclick="scrollRow('row3',1)">&#10095;</span>
-    <div class="carousel" id="row3"></div>
+    <h2>Top Rated</h2>
+    <button class="nav-btn nav-left">❮</button>
+    <button class="nav-btn nav-right">❯</button>
+    <div class="carousel">
+      <!-- 12 cards -->
+      <div class="card" data-title="Film 25" data-rating="⭐ 9.1" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=35"><div class="rating">⭐ 9.1</div></div>
+      <div class="card" data-title="Film 26" data-rating="⭐ 7.8" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=36"><div class="rating">⭐ 7.8</div></div>
+      <div class="card" data-title="Film 27" data-rating="⭐ 8.2" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=37"><div class="rating">⭐ 8.2</div></div>
+      <div class="card" data-title="Film 28" data-rating="⭐ 9.5" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=38"><div class="rating">⭐ 9.5</div></div>
+      <div class="card" data-title="Film 29" data-rating="⭐ 7.6" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=39"><div class="rating">⭐ 7.6</div></div>
+      <div class="card" data-title="Film 30" data-rating="⭐ 8.7" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=40"><div class="rating">⭐ 8.7</div></div>
+      <div class="card" data-title="Film 31" data-rating="⭐ 8.9" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=41"><div class="rating">⭐ 8.9</div></div>
+      <div class="card" data-title="Film 32" data-rating="⭐ 7.4" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=42"><div class="rating">⭐ 7.4</div></div>
+      <div class="card" data-title="Film 33" data-rating="⭐ 9.2" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=43"><div class="rating">⭐ 9.2</div></div>
+      <div class="card" data-title="Film 34" data-rating="⭐ 7.7" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=44"><div class="rating">⭐ 7.7</div></div>
+      <div class="card" data-title="Film 35" data-rating="⭐ 8.3" data-url="https://www.w3schools.com/html/mov_bbb.mp4"><img src="https://picsum.photos/200/300?random=45"><div class="rating">⭐ 8.3</div></div>
+      <div class="card" data-title="Film 36" data-rating="⭐ 9.6" data-url="https://www.w3schools.com/html/movie.mp4"><img src="https://picsum.photos/200/300?random=46"><div class="rating">⭐ 9.6</div></div>
+    </div>
   </section>
 
   <!-- Modal Info -->
   <div class="modal" id="infoModal">
     <div class="modal-content">
-      <span class="close" id="closeInfo">&times;</span>
-      <h3 id="infoTitle"></h3>
-      <div class="rating" id="infoRating"></div>
+      <div class="close" onclick="closeModal('infoModal')">✖</div>
+      <h2 id="infoTitle"></h2>
+      <p id="infoRating"></p>
       <button class="btn-play" id="infoPlay">▶</button>
     </div>
   </div>
 
-  <!-- Modal Player -->
+  <!-- Player Modal -->
   <div class="player-modal" id="playerModal">
     <div class="player-content">
-      <span class="close" id="closePlayer">&times;</span>
-      <video id="playerVideo" controls autoplay style="width:100%;border-radius:6px;"></video>
+      <div class="close" onclick="closeModal('playerModal')">✖</div>
+      <video id="playerVideo" width="100%" controls></video>
     </div>
   </div>
 
-  <footer>
-    <p>&copy; 2025 MyFlix. All Rights Reserved.</p>
-  </footer>
+  <footer>© 2025 MyFlix. All Rights Reserved.</footer>
 
   <script>
-    // === Data Film (60 contoh) ===
-    const videos = Array.from({length:60}).map((_,i)=>({
-      title:`Film ${i+1}`,
-      desc:`She does it again ${i+1}.`,
-      rating:(Math.random()*4+6).toFixed(1),
-      url:`https://vdyceo678y.github.io/Vdghj3qe1.mp4/`,
-      poster:`https://videyceo-ops.github.io/Vdghj3qe1.mp4/1.jpg?random=${i+1}`,
-      banner:`https://picsum.photos/1200/600?random=${i+1}`
-    }));
-
-    // Navbar scroll effect
-    window.addEventListener("scroll",()=>{
-      document.querySelector("header").classList.toggle("scrolled",window.scrollY>50);
-    });
+    // Navbar bg
+    window.addEventListener('scroll',()=>{document.querySelector('header').classList.toggle('scrolled',window.scrollY>50);});
 
     // Hero auto rotate
-    let currentHero=0;
-    const heroBanner=document.getElementById("heroBanner");
-    const heroTitle=document.getElementById("heroTitle");
-    const heroDesc=document.getElementById("heroDesc");
-    const heroRating=document.getElementById("heroRating");
-    function updateHero(idx){
-      const v=videos[idx];
-      heroBanner.src=v.banner;
-      heroTitle.textContent=v.title;
-      heroDesc.textContent=v.desc;
-      heroRating.textContent="⭐ "+v.rating;
-      currentHero=idx;
-    }
-    updateHero(0);
-    setInterval(()=>{currentHero=(currentHero+1)%videos.length;updateHero(currentHero);},8000);
+    let slides=document.querySelectorAll('.hero-slide');let idx=0;
+    setInterval(()=>{slides[idx].classList.remove('active');idx=(idx+1)%slides.length;slides[idx].classList.add('active');},6000);
 
-    // Render row
-    function renderRow(rowId,start){
-      const row=document.getElementById(rowId);
-      for(let i=start;i<start+20;i++){
-        const v=videos[i];
-        const card=document.createElement("div");
-        card.className="card";
-        card.innerHTML=`
-          <img src="${v.poster}" alt="${v.title}">
-          <div class="rating">⭐ ${v.rating}</div>`;
-        card.addEventListener("click",()=>openInfo(i));
-        row.appendChild(card);
-      }
-    }
-    renderRow("row1",0);
-    renderRow("row2",20);
-    renderRow("row3",40);
+    // Card click open info
+    document.querySelectorAll('.card').forEach(c=>{
+      c.addEventListener('click',()=>{
+        document.getElementById('infoTitle').textContent=c.dataset.title;
+        document.getElementById('infoRating').textContent=c.dataset.rating;
+        document.getElementById('infoPlay').setAttribute('data-url',c.dataset.url);
+        document.getElementById('infoModal').classList.add('show');
+      });
+    });
 
-    // Scroll row arrows
-    function scrollRow(id,dir){
-      const row=document.getElementById(id);
-      row.scrollBy({left:dir*600,behavior:"smooth"});
+    // Info modal play
+    document.getElementById('infoPlay').addEventListener('click',e=>{
+      let url=e.target.getAttribute('data-url'); playVideo(url);
+    });
+
+    // Hero buttons
+    document.querySelectorAll('.btn-play').forEach(b=>b.addEventListener('click',()=>playVideo(b.dataset.url)));
+    document.querySelectorAll('.btn-info').forEach(b=>b.addEventListener('click',()=>{
+      document.getElementById('infoTitle').textContent=b.dataset.title;
+      document.getElementById('infoRating').textContent=b.dataset.rating;
+      document.getElementById('infoPlay').setAttribute('data-url',b.dataset.url);
+      document.getElementById('infoModal').classList.add('show');
+    }));
+
+    function playVideo(url){
+      let v=document.getElementById('playerVideo'); v.src=url; v.play();
+      document.getElementById('playerModal').classList.add('show');
+    }
+    function closeModal(id){
+      document.getElementById(id).classList.remove('show');
+      if(id==='playerModal'){let v=document.getElementById('playerVideo'); v.pause(); v.src='';}
     }
 
-    // Modal Info
-    const infoModal=document.getElementById("infoModal");
-    const infoTitle=document.getElementById("infoTitle");
-    const infoRating=document.getElementById("infoRating");
-    const infoPlay=document.getElementById("infoPlay");
-    let currentInfo=0;
-    function openInfo(idx){
-      const v=videos[idx];
-      currentInfo=idx;
-      infoTitle.textContent=v.title;
-      infoRating.textContent="⭐ "+v.rating;
-      infoModal.style.display="flex";
-    }
-    document.getElementById("heroInfo").onclick=()=>openInfo(currentHero);
-    document.getElementById("closeInfo").onclick=()=>infoModal.style.display="none";
+    // Carousel drag scroll + arrows
+    document.querySelectorAll('.row').forEach(row=>{
+      let carousel=row.querySelector('.carousel');
+      let left=row.querySelector('.nav-left');
+      let right=row.querySelector('.nav-right');
 
-    // Modal Player
-    const playerModal=document.getElementById("playerModal");
-    const playerVideo=document.getElementById("playerVideo");
-    function playVideo(idx){
-      const v=videos[idx];
-      playerVideo.src=v.url;
-      playerModal.style.display="flex";
-      playerVideo.play();
-    }
-    document.getElementById("heroPlay").onclick=()=>playVideo(currentHero);
-    infoPlay.onclick=()=>{playVideo(currentInfo); infoModal.style.display="none";};
-    document.getElementById("closePlayer").onclick=()=>{
-      playerVideo.pause();
-      playerModal.style.display="none";
-    };
+      // Drag
+      let down=false,startX,scrollL;
+      carousel.addEventListener('mousedown',e=>{down=true;startX=e.pageX-carousel.offsetLeft;scrollL=carousel.scrollLeft;});
+      carousel.addEventListener('mouseleave',()=>{down=false;});
+      carousel.addEventListener('mouseup',()=>{down=false;});
+      carousel.addEventListener('mousemove',e=>{
+        if(!down)return;e.preventDefault();
+        let x=e.pageX-carousel.offsetLeft;let walk=(x-startX)*2;carousel.scrollLeft=scrollL-walk;
+      });
+
+      // Arrow click
+      left.addEventListener('click',()=>{carousel.scrollBy({left:-900,behavior:'smooth'});});
+      right.addEventListener('click',()=>{carousel.scrollBy({left:900,behavior:'smooth'});});
+    });
   </script>
 </body>
 </html>
